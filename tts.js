@@ -24,17 +24,14 @@ export default async function handler(req, res) {
     });
 
     const data = await fptRes.json();
-    if (!data.async) return res.status(500).json({ error: data.message || "FPT.AI lỗi" });
 
-    await new Promise(r => setTimeout(r, 2500));
+    if (!data.async) {
+      return res.status(500).json({ error: data.message || "FPT.AI không trả về link audio" });
+    }
 
-    const audioRes = await fetch(data.async);
-    if (!audioRes.ok) return res.status(500).json({ error: "Không tải được audio" });
+    // Trả link audio thẳng về cho client, client tự chờ và phát
+    return res.status(200).json({ audioUrl: data.async });
 
-    const audioBuffer = await audioRes.arrayBuffer();
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Cache-Control", "no-cache");
-    return res.status(200).send(Buffer.from(audioBuffer));
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
