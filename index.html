@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎙️ Nhân Vật Đọc Truyện</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Baloo 2', sans-serif;
+    background: linear-gradient(135deg, #FFF9F0 0%, #F0F8FF 50%, #FFF0F8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 16px 60px;
+  }
+  .app { width: 100%; max-width: 600px; }
+  .title { text-align: center; font-size: 28px; font-weight: 800; color: #333; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 14px; color: #999; margin-bottom: 24px; }
+
+  .chars { display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .cbtn {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; border: 2.5px solid #EEE; border-radius: 20px;
+    padding: 14px 18px 10px; background: white; transition: all 0.2s ease;
+    min-width: 115px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .cbtn:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+  .cbtn.active-cat  { background:#FFF8EE; border-color:#FF8C00; transform:translateY(-5px); box-shadow:0 8px 24px rgba(255,140,0,0.2); }
+  .cbtn.active-robot{ background:#EEF6FF; border-color:#1976D2; transform:translateY(-5px); box-shadow:0 8px 24px rgba(25,118,210,0.2); }
+  .cbtn.active-rabbit{background:#FFF0F6; border-color:#E91E8C; transform:translateY(-5px); box-shadow:0 8px 24px rgba(233,30,140,0.2); }
+  .cname { font-size: 14px; font-weight: 700; color: #777; }
+  .cbtn.active-cat .cname   { color: #E65100; }
+  .cbtn.active-robot .cname { color: #0D47A1; }
+  .cbtn.active-rabbit .cname{ color: #880E4F; }
+
+  .voice-row {
+    background: white; border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 16px; border: 1.5px solid #EEE;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
+  }
+  .voice-row label { font-size: 13px; font-weight: 700; color: #555; }
+  .voice-row select {
+    flex: 1; min-width: 180px; border: 1px solid #DDD; border-radius: 10px;
+    padding: 8px 12px; font-size: 13px; font-family: 'Baloo 2', sans-serif;
+    background: white; color: #333; cursor: pointer; outline: none;
+  }
+  .voice-row select:focus { border-color: #FF8C00; }
+
+  textarea {
+    width: 100%; min-height: 130px; border-radius: 16px;
+    border: 1.5px solid #EEE; padding: 14px 16px;
+    font-family: 'Baloo 2', sans-serif; font-size: 16px; color: #333;
+    background: white; resize: vertical; outline: none; line-height: 1.7;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: #FF8C00; }
+  textarea::placeholder { color: #BBB; }
+
+  .btns { display: flex; gap: 10px; margin-bottom: 12px; }
+  .bspeak {
+    flex: 1; padding: 14px 24px; border-radius: 50px; border: none;
+    font-family: 'Baloo 2', sans-serif; font-size: 17px; font-weight: 800;
+    cursor: pointer; background: linear-gradient(135deg, #FF8C00, #FF5722);
+    color: white; transition: all 0.2s; box-shadow: 0 4px 14px rgba(255,140,0,0.4);
+  }
+  .bspeak:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(255,140,0,0.5); }
+  .bspeak:active { transform: scale(0.97); }
+  .bspeak:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .bstop {
+    padding: 14px 20px; border-radius: 50px; border: 2px solid #EEE;
+    font-family: 'Baloo 2', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; background: white; color: #888; transition: all 0.2s;
+  }
+  .bstop:hover { background: #FFF0F0; border-color: #FFB3B3; color: #E53935; }
+
+  .status { text-align: center; font-size: 14px; color: #AAA; min-height: 20px; padding: 4px 0; transition: color 0.3s; }
+  .status.ok      { color: #43A047; }
+  .status.err     { color: #E53935; }
+  .status.loading { color: #1976D2; }
+
+  .footer { text-align: center; font-size: 12px; color: #CCC; margin-top: 24px; }
+
+  .mouth-talk { animation: mBounce 0.17s ease-in-out infinite alternate; transform-origin: center; }
+  @keyframes mBounce { from { transform: scaleY(1); } to { transform: scaleY(0.15); } }
+  .body-bop { animation: bBop 0.38s ease-in-out infinite alternate; }
+  @keyframes bBop { from { transform: translateY(0px); } to { transform: translateY(-6px); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="title">🎙️ Nhân Vật Đọc Truyện</div>
+  <div class="subtitle">Chọn nhân vật yêu thích và để nó đọc cho bạn nghe!</div>
+
+  <div class="chars">
+    <button class="cbtn active-cat" id="btn-cat" onclick="selectChar('cat')">
+      <svg width="85" height="85" viewBox="0 0 80 80">
+        <g id="cat-body" class="body-bop">
+          <ellipse cx="40" cy="52" rx="20" ry="16" fill="#FFA726"/>
+          <polygon points="22,30 15,12 32,26" fill="#FFA726"/>
+          <polygon points="58,30 65,12 48,26" fill="#FFA726"/>
+          <polygon points="22,28 17,14 31,25" fill="#FFB74D"/>
+          <polygon points="58,28 63,14 49,25" fill="#FFB74D"/>
+          <circle cx="40" cy="36" r="18" fill="#FFCC80"/>
+          <ellipse cx="33" cy="33" rx="4" ry="4.5" fill="#333"/>
+          <ellipse cx="47" cy="33" rx="4" ry="4.5" fill="#333"/>
+          <circle cx="34.5" cy="31.5" r="1.5" fill="white"/>
+          <circle cx="48.5" cy="31.5" r="1.5" fill="white"/>
+          <ellipse cx="40" cy="39" rx="3" ry="2" fill="#FF7043"/>
+          <g id="cat-mouth"><path d="M34 42 Q37 47 40 44 Q43 47 46 42" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"/></g>
+          <line x1="14" y1="38" x2="31" y2="39" stroke="#ccc" stroke-width="1.2"/>
+          <line x1="14" y1="41" x2="31" y2="41" stroke="#ccc" stroke-width="1.2"/>
+          <line x1="49" y1="39" x2="66" y2="38" stroke="#ccc" stroke-width="1.2"/>
+          <line x1="49" y1="41" x2="66" y2="41" stroke="#ccc" stroke-width="1.2"/>
+          <path d="M56 62 Q70 68 68 76" fill="none" stroke="#FFA726" stroke-width="5" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <span class="cname">🐱 Mèo</span>
+    </button>
+
+    <button class="cbtn" id="btn-robot" onclick="selectChar('robot')">
+      <svg width="85" height="85" viewBox="0 0 80 80">
+        <g id="robot-body">
+          <line x1="40" y1="8" x2="40" y2="18" stroke="#90A4AE" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="40" cy="6" r="4" fill="#29B6F6"/>
+          <rect x="18" y="18" width="44" height="34" rx="8" fill="#78909C"/>
+          <rect x="20" y="20" width="40" height="30" rx="6" fill="#90A4AE"/>
+          <rect x="25" y="25" width="12" height="10" rx="3" fill="#29B6F6"/>
+          <rect x="43" y="25" width="12" height="10" rx="3" fill="#29B6F6"/>
+          <circle cx="31" cy="30" r="3" fill="#0288D1"/>
+          <circle cx="49" cy="30" r="3" fill="#0288D1"/>
+          <circle cx="32" cy="29" r="1" fill="white"/>
+          <circle cx="50" cy="29" r="1" fill="white"/>
+          <rect x="25" y="40" width="30" height="9" rx="3" fill="#607D8B"/>
+          <g id="robot-mouth">
+            <rect x="27" y="42.5" width="4" height="4" rx="1" fill="#29B6F6"/>
+            <rect x="33" y="42.5" width="4" height="4" rx="1" fill="#29B6F6"/>
+            <rect x="39" y="42.5" width="4" height="4" rx="1" fill="#29B6F6"/>
+            <rect x="45" y="42.5" width="4" height="4" rx="1" fill="#29B6F6"/>
+          </g>
+          <rect x="24" y="54" width="32" height="18" rx="6" fill="#78909C"/>
+          <circle cx="34" cy="63" r="4" fill="#546E7A"/>
+          <circle cx="46" cy="63" r="4" fill="#546E7A"/>
+          <circle cx="34" cy="63" r="2" fill="#29B6F6"/>
+          <circle cx="46" cy="63" r="2" fill="#EF5350"/>
+        </g>
+      </svg>
+      <span class="cname">🤖 Robot</span>
+    </button>
+
+    <button class="cbtn" id="btn-rabbit" onclick="selectChar('rabbit')">
+      <svg width="85" height="85" viewBox="0 0 80 80">
+        <g id="rabbit-body">
+          <ellipse cx="28" cy="17" rx="8" ry="15" fill="#F8BBD9"/>
+          <ellipse cx="52" cy="17" rx="8" ry="15" fill="#F8BBD9"/>
+          <ellipse cx="28" cy="17" rx="5" ry="11" fill="#F48FB1"/>
+          <ellipse cx="52" cy="17" rx="5" ry="11" fill="#F48FB1"/>
+          <circle cx="40" cy="44" r="21" fill="white"/>
+          <circle cx="32" cy="39" r="5" fill="#F8BBD9"/>
+          <circle cx="48" cy="39" r="5" fill="#F8BBD9"/>
+          <circle cx="32" cy="39" r="3" fill="#880E4F"/>
+          <circle cx="48" cy="39" r="3" fill="#880E4F"/>
+          <circle cx="33" cy="38" r="1" fill="white"/>
+          <circle cx="49" cy="38" r="1" fill="white"/>
+          <ellipse cx="40" cy="47" rx="3" ry="2" fill="#F48FB1"/>
+          <g id="rabbit-mouth"><path d="M35 50 Q37.5 56 40 52 Q42.5 56 45 50" fill="none" stroke="#E91E8C" stroke-width="1.8" stroke-linecap="round"/></g>
+          <circle cx="26" cy="50" r="6" fill="#F48FB1" opacity="0.25"/>
+          <circle cx="54" cy="50" r="6" fill="#F48FB1" opacity="0.25"/>
+          <line x1="13" y1="47" x2="33" y2="48" stroke="#ddd" stroke-width="1.2"/>
+          <line x1="13" y1="50" x2="33" y2="50" stroke="#ddd" stroke-width="1.2"/>
+          <line x1="47" y1="48" x2="67" y2="47" stroke="#ddd" stroke-width="1.2"/>
+          <line x1="47" y1="50" x2="67" y2="50" stroke="#ddd" stroke-width="1.2"/>
+          <circle cx="40" cy="71" r="6" fill="white" stroke="#F8BBD9" stroke-width="2"/>
+        </g>
+      </svg>
+      <span class="cname">🐰 Thỏ</span>
+    </button>
+  </div>
+
+  <div class="voice-row">
+    <label>🎵 Giọng đọc:</label>
+    <select id="voiceSelect">
+      <option value="lannhi">⭐ Bé Lan Nhi – Bắc (trẻ em nữ)</option>
+      <option value="giahuy">⭐ Bé Gia Huy – Nam bộ (trẻ em nam)</option>
+      <option value="banmai">Cô Ban Mai – Bắc (nữ)</option>
+      <option value="thuminh">Cô Thu Minh – Bắc (nữ)</option>
+      <option value="linhsan">Anh Linh San – Bắc (nam)</option>
+      <option value="myan">Cô Mỹ An – Nam bộ (nữ)</option>
+    </select>
+  </div>
+
+  <textarea id="textInput" placeholder="✏️ Gõ hoặc dán nội dung tiếng Việt vào đây..."></textarea>
+
+  <div class="btns">
+    <button class="bspeak" id="speakBtn" onclick="startSpeaking()">▶ 🐱 Mèo đọc!</button>
+    <button class="bstop" onclick="stopSpeaking()">⏹ Dừng</button>
+  </div>
+  <div class="status" id="status">Chọn nhân vật và nhập nội dung để bắt đầu ✨</div>
+  <div class="footer">Powered by FPT.AI · Dùng được trên mọi thiết bị 🌐</div>
+</div>
+
+<script>
+let currentChar = 'cat';
+let audio = null;
+let robotInterval = null;
+
+const speakLabels   = { cat:'▶ 🐱 Mèo đọc!', robot:'▶ 🤖 Robot đọc!', rabbit:'▶ 🐰 Thỏ đọc!' };
+const readingLabels = { cat:'🐱 Mèo đang đọc...', robot:'🤖 Robot đang xử lý...', rabbit:'🐰 Thỏ đang đọc...' };
+
+function selectChar(c) {
+  currentChar = c;
+  ['cat','robot','rabbit'].forEach(n => {
+    const b = document.getElementById('btn-'+n);
+    b.className = 'cbtn' + (n===c ? ' active-'+n : '');
+  });
+  stopSpeaking();
+  document.getElementById('speakBtn').textContent = speakLabels[c];
+}
+
+function setAnimate(on) {
+  const mouthIds = { cat:'cat-mouth', robot:'robot-mouth', rabbit:'rabbit-mouth' };
+  const bodyIds  = { cat:'cat-body', rabbit:'rabbit-body' };
+  const m = document.getElementById(mouthIds[currentChar]);
+  if (m) { on ? m.classList.add('mouth-talk') : m.classList.remove('mouth-talk'); }
+  if (bodyIds[currentChar]) {
+    const b = document.getElementById(bodyIds[currentChar]);
+    if (b) { on ? b.classList.add('body-bop') : b.classList.remove('body-bop'); }
+  }
+  if (currentChar === 'robot') { on ? startRobotBlink() : stopRobotBlink(); }
+}
+
+function startRobotBlink() {
+  stopRobotBlink();
+  const boxes = document.querySelectorAll('#robot-mouth rect');
+  let t = false;
+  robotInterval = setInterval(() => {
+    t = !t;
+    boxes.forEach((b,i) => {
+      b.setAttribute('fill', ((t&&i%2===0)||(!t&&i%2!==0)) ? '#29B6F6':'#546E7A');
+    });
+  }, 140);
+}
+function stopRobotBlink() {
+  if (robotInterval) { clearInterval(robotInterval); robotInterval = null; }
+  document.querySelectorAll('#robot-mouth rect').forEach(b => b.setAttribute('fill','#29B6F6'));
+}
+
+function setStatus(msg, type='') {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = 'status ' + type;
+}
+
+async function startSpeaking() {
+  const text  = document.getElementById('textInput').value.trim();
+  const voice = document.getElementById('voiceSelect').value;
+  const btn   = document.getElementById('speakBtn');
+  if (!text) { setStatus('⚠️ Vui lòng nhập nội dung cần đọc!', 'err'); return; }
+
+  stopSpeaking();
+  btn.disabled = true;
+  setStatus('⏳ Đang tạo giọng đọc...', 'loading');
+
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Lỗi không xác định' }));
+      setStatus('❌ ' + (err.error || 'Lỗi server'), 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    audio = new Audio(url);
+    audio.onplay   = () => { setAnimate(true);  setStatus(readingLabels[currentChar], 'ok'); };
+    audio.onended  = () => { setAnimate(false); setStatus('✅ Đọc xong rồi! 🎉', 'ok'); btn.disabled = false; URL.revokeObjectURL(url); };
+    audio.onerror  = () => { setAnimate(false); setStatus('❌ Không phát được audio!', 'err'); btn.disabled = false; };
+    audio.play();
+  } catch(e) {
+    setStatus('❌ Lỗi: ' + e.message, 'err');
+    btn.disabled = false;
+  }
+}
+
+function stopSpeaking() {
+  if (audio) { audio.pause(); audio = null; }
+  setAnimate(false);
+  document.getElementById('speakBtn').disabled = false;
+  setStatus('⏹ Đã dừng.');
+}
+</script>
+</body>
+</html>
