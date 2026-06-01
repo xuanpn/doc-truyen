@@ -19,7 +19,6 @@
   .app { width: 100%; max-width: 600px; }
   .title { text-align: center; font-size: 28px; font-weight: 800; color: #333; margin-bottom: 4px; }
   .subtitle { text-align: center; font-size: 14px; color: #999; margin-bottom: 24px; }
-
   .chars { display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
   .cbtn {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -28,14 +27,13 @@
     min-width: 115px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
   .cbtn:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
-  .cbtn.active-cat  { background:#FFF8EE; border-color:#FF8C00; transform:translateY(-5px); box-shadow:0 8px 24px rgba(255,140,0,0.2); }
-  .cbtn.active-robot{ background:#EEF6FF; border-color:#1976D2; transform:translateY(-5px); box-shadow:0 8px 24px rgba(25,118,210,0.2); }
-  .cbtn.active-rabbit{background:#FFF0F6; border-color:#E91E8C; transform:translateY(-5px); box-shadow:0 8px 24px rgba(233,30,140,0.2); }
+  .cbtn.active-cat   { background:#FFF8EE; border-color:#FF8C00; transform:translateY(-5px); box-shadow:0 8px 24px rgba(255,140,0,0.2); }
+  .cbtn.active-robot { background:#EEF6FF; border-color:#1976D2; transform:translateY(-5px); box-shadow:0 8px 24px rgba(25,118,210,0.2); }
+  .cbtn.active-rabbit{ background:#FFF0F6; border-color:#E91E8C; transform:translateY(-5px); box-shadow:0 8px 24px rgba(233,30,140,0.2); }
   .cname { font-size: 14px; font-weight: 700; color: #777; }
-  .cbtn.active-cat .cname   { color: #E65100; }
-  .cbtn.active-robot .cname { color: #0D47A1; }
-  .cbtn.active-rabbit .cname{ color: #880E4F; }
-
+  .cbtn.active-cat .cname    { color: #E65100; }
+  .cbtn.active-robot .cname  { color: #0D47A1; }
+  .cbtn.active-rabbit .cname { color: #880E4F; }
   .voice-row {
     background: white; border-radius: 14px; padding: 12px 16px;
     margin-bottom: 16px; border: 1.5px solid #EEE;
@@ -49,7 +47,6 @@
     background: white; color: #333; cursor: pointer; outline: none;
   }
   .voice-row select:focus { border-color: #FF8C00; }
-
   textarea {
     width: 100%; min-height: 130px; border-radius: 16px;
     border: 1.5px solid #EEE; padding: 14px 16px;
@@ -60,7 +57,6 @@
   }
   textarea:focus { border-color: #FF8C00; }
   textarea::placeholder { color: #BBB; }
-
   .btns { display: flex; gap: 10px; margin-bottom: 12px; }
   .bspeak {
     flex: 1; padding: 14px 24px; border-radius: 50px; border: none;
@@ -68,7 +64,7 @@
     cursor: pointer; background: linear-gradient(135deg, #FF8C00, #FF5722);
     color: white; transition: all 0.2s; box-shadow: 0 4px 14px rgba(255,140,0,0.4);
   }
-  .bspeak:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(255,140,0,0.5); }
+  .bspeak:hover { transform: scale(1.03); }
   .bspeak:active { transform: scale(0.97); }
   .bspeak:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
   .bstop {
@@ -77,14 +73,11 @@
     cursor: pointer; background: white; color: #888; transition: all 0.2s;
   }
   .bstop:hover { background: #FFF0F0; border-color: #FFB3B3; color: #E53935; }
-
   .status { text-align: center; font-size: 14px; color: #AAA; min-height: 20px; padding: 4px 0; transition: color 0.3s; }
   .status.ok      { color: #43A047; }
   .status.err     { color: #E53935; }
   .status.loading { color: #1976D2; }
-
   .footer { text-align: center; font-size: 12px; color: #CCC; margin-top: 24px; }
-
   .mouth-talk { animation: mBounce 0.17s ease-in-out infinite alternate; transform-origin: center; }
   @keyframes mBounce { from { transform: scaleY(1); } to { transform: scaleY(0.15); } }
   .body-bop { animation: bBop 0.38s ease-in-out infinite alternate; }
@@ -214,8 +207,7 @@ const readingLabels = { cat:'🐱 Mèo đang đọc...', robot:'🤖 Robot đang
 function selectChar(c) {
   currentChar = c;
   ['cat','robot','rabbit'].forEach(n => {
-    const b = document.getElementById('btn-'+n);
-    b.className = 'cbtn' + (n===c ? ' active-'+n : '');
+    document.getElementById('btn-'+n).className = 'cbtn' + (n===c ? ' active-'+n : '');
   });
   stopSpeaking();
   document.getElementById('speakBtn').textContent = speakLabels[c];
@@ -263,7 +255,7 @@ async function startSpeaking() {
 
   stopSpeaking();
   btn.disabled = true;
-  setStatus('⏳ Đang tạo giọng đọc...', 'loading');
+  setStatus('⏳ Đang gửi yêu cầu tới FPT.AI...', 'loading');
 
   try {
     const res = await fetch('/api/tts', {
@@ -272,22 +264,44 @@ async function startSpeaking() {
       body: JSON.stringify({ text, voice })
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Lỗi không xác định' }));
-      setStatus('❌ ' + (err.error || 'Lỗi server'), 'err');
+    const data = await res.json();
+
+    if (!res.ok || !data.audioUrl) {
+      setStatus('❌ ' + (data.error || 'Lỗi không xác định'), 'err');
       btn.disabled = false;
       return;
     }
 
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    audio = new Audio(url);
-    audio.onplay   = () => { setAnimate(true);  setStatus(readingLabels[currentChar], 'ok'); };
-    audio.onended  = () => { setAnimate(false); setStatus('✅ Đọc xong rồi! 🎉', 'ok'); btn.disabled = false; URL.revokeObjectURL(url); };
-    audio.onerror  = () => { setAnimate(false); setStatus('❌ Không phát được audio!', 'err'); btn.disabled = false; };
-    audio.play();
+    setStatus('⏳ Đang chuẩn bị giọng đọc...', 'loading');
+
+    // Thử tải audio, retry tối đa 5 lần vì FPT.AI cần thời gian xử lý
+    let audioUrl = data.audioUrl;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    const tryPlay = async () => {
+      attempts++;
+      await new Promise(r => setTimeout(r, 1500));
+      audio = new Audio(audioUrl);
+      audio.onplay  = () => { setAnimate(true);  setStatus(readingLabels[currentChar], 'ok'); };
+      audio.onended = () => { setAnimate(false); setStatus('✅ Đọc xong rồi! 🎉', 'ok'); btn.disabled = false; };
+      audio.onerror = () => {
+        if (attempts < maxAttempts) {
+          setStatus(`⏳ Đang chờ xử lý... (${attempts}/${maxAttempts})`, 'loading');
+          tryPlay();
+        } else {
+          setAnimate(false);
+          setStatus('❌ Không phát được audio, thử lại!', 'err');
+          btn.disabled = false;
+        }
+      };
+      audio.play().catch(() => {});
+    };
+
+    tryPlay();
+
   } catch(e) {
-    setStatus('❌ Lỗi: ' + e.message, 'err');
+    setStatus('❌ Lỗi kết nối: ' + e.message, 'err');
     btn.disabled = false;
   }
 }
