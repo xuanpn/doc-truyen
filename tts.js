@@ -26,7 +26,6 @@ export default async function handler(req, res) {
     const data = await fptRes.json();
     if (!data.async) return res.status(500).json({ error: data.message || "FPT.AI lỗi" });
 
-    // Chờ FPT.AI xử lý xong rồi tải audio về
     await new Promise(r => setTimeout(r, 2500));
 
     const audioRes = await fetch(data.async);
@@ -36,7 +35,6 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "no-cache");
     return res.status(200).send(Buffer.from(audioBuffer));
-
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
